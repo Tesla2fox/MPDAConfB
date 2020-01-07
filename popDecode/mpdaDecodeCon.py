@@ -7,6 +7,7 @@ from popDecode.mpdaDecoderActSeq import ActionSeq,ActionTuple,EventType,MPDADeco
 import numpy as np
 from enum import Enum
 from collections import  namedtuple
+import math
 
 RobTaskPair = namedtuple('RobTaskPair',['robID','taskID'])
 
@@ -27,24 +28,24 @@ def generateRandEncode(robNum,taskNum):
     return encode
 
 
-def generateRandPopEncode(robNum,taskNum):
-    pop = []
-    encode = np.zeros((robNum, taskNum),dtype =int)
-    for i in range(robNum):
-        permLst = [x for x in range(taskNum)]
-        np.random.shuffle(permLst)
-        encode[i][:] = permLst
-    robIndLst = [0 for _ in range(robNum)]
-
-    while len(pop) == (robNum*taskNum):
-        rdRobID = np.random.randint(0,robNum -1)
-        rdTaskID = encode[rdRobID][robIndLst[rdRobID]]
-        pop.append(RobTaskPair(rdRobID,rdTaskID))
-        robIndLst[rdRobID] += 1
-
-    '''
-    there are still some problems to construct a 
-    '''
+# def generateRandPopEncode(robNum,taskNum):
+#     pop = []
+#     encode = np.zeros((robNum, taskNum),dtype =int)
+#     for i in range(robNum):
+#         permLst = [x for x in range(taskNum)]
+#         np.random.shuffle(permLst)
+#         encode[i][:] = permLst
+#     robIndLst = [0 for _ in range(robNum)]
+#
+#     while len(pop) == (robNum*taskNum):
+#         rdRobID = np.random.randint(0,robNum -1)
+#         rdTaskID = encode[rdRobID][robIndLst[rdRobID]]
+#         pop.append(RobTaskPair(rdRobID,rdTaskID))
+#         robIndLst[rdRobID] += 1
+#
+#     '''
+#     there are still some problems to construct a
+#     '''
 
 
 
@@ -91,12 +92,14 @@ class MPDADecoderCon(object):
         self._taskRateLst = ins._taskRateLst
         self._rob2taskDisMat = ins._rob2taskDisMat
         self._taskDisMat = ins._taskDisMat
+        self._taskConLst = ins._taskConLst
         if degBoolean:
             self._degFile = open(BaseDir+ '/debugData/deg.dat', 'w')
 
     def decode(self, x):
         self.encode = x
         self._actSeq = ActionSeq()
+        self._invalidTaskLst = []
         self.initStates()
         # if self.decodeProcessor():
         validStateBoolean = self.decodeProcessor()
@@ -163,6 +166,11 @@ class MPDADecoderCon(object):
                     task = self.taskLst[taskID]
                     rob.taskID = taskID
                     validStateBool = task.calCurrentState(arriveTime)
+                    if task.cState > math.exp(self._taskConLst[taskID]):
+                        if taskID in self._invalidTaskLst:
+                            pass
+                        else:
+                            self._invalidTaskLst.append(taskID)
                     if not validStateBool:
                         break
                     task.cRate = task.cRate - rob._ability

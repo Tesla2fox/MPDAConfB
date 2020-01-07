@@ -41,8 +41,7 @@ class MPDAInstance(object):
                 self._taskDisMat[i][j] = disLst[i * self._taskNum + j]
 
         self._taskConLst = []
-        readCfg.get('task_con', self._taskConLst)
-        print(self._taskConLst)
+        readCfg.get('tsk_con', self._taskConLst)
     def __str__(self):
         return 'robNum = ' + str(self._robNum) + '  taskNum = ' + str(self._taskNum) +'\n'+ self._insName
 
