@@ -354,23 +354,52 @@ class MPDADecoderCon(object):
             deg.write(robInfo+'\n')
         deg.write('\n')
         deg.flush()
+import os
+
 if __name__ == '__main__':
     print('test_mpdaDecoder')
 
 
+    f_con = open(BaseDir +'//b_conBenchmark.dat','w')
     print(BaseDir)
-    ins = MPDAInstance()
-    insFileName = BaseDir +'//benchmark//8_8_ECCENTRIC_RANDOM_UNITARY_QUADRANT_thre0.1MPDAins.dat'
-    ins.loadCfg(fileName =  insFileName)
+    for root, exsit_dirs, files in os.walk(BaseDir+'//conBenchmark'):
+        # print(files)
+        # break
+        for file in files:
+            print(file)
+            ins = MPDAInstance()
+            insFileName = BaseDir + '//conBenchmark//'+file
+            # insFileName = BaseDir + '//conBenchmark//5_5_CLUSTERED_CLUSTERED_UNITARY_SVSCV_LVSCV_thre0.1MPDAins.dat'
+            try:
+                ins.loadCfg(fileName=insFileName)
+            except:
+                continue
+            decoder = MPDADecoderCon(ins)
+            invalidNum = 0
+            for _ in range(100):
+                x = generateRandEncode(robNum=ins._robNum, taskNum=ins._taskNum)
+                validStateBoolean, actSeq = decoder.decode(x)
+                actSeqDecoder = MPDADecoderActionSeq(ins)
+                actSeqDecoder.decode(actSeq)
+                if len(decoder._invalidTaskLst) !=0:
+                    invalidNum += 1
+            print(invalidNum)
+            if invalidNum > 20:
+                print(file)
+                f_con.write(file +'\n')
+                f_con.flush()
+            # break
+        break
+    exit()
 
-    decoder = MPDADecoderCon(ins)
+
     np.random.seed(2)
     x = []
     for _ in range(10):
         x.append(RobTaskPair(robID = np.random.randint(0, ins._robNum -1),taskID = np.random.randint(0, ins._taskNum -1)))
     print(x)
 
-    # x = generateRandEncode(robNum= ins._robNum, taskNum= ins._taskNum)
+    x = generateRandEncode(robNum= ins._robNum, taskNum= ins._taskNum)
     # x = [RobTaskPair(robID = 1, taskID = 2),RobTaskPair(robID = 3,taskID = 4)]
     # print(x)
     # exit()
